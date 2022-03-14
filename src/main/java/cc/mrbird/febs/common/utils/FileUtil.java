@@ -5,11 +5,18 @@ import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import org.springframework.util.FileSystemUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URL;
+
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedOutputStream;
 import java.util.zip.ZipEntry;
@@ -127,6 +134,92 @@ public abstract class FileUtil {
         }
     }
 
+    /**
+     * 删除文件或者文件夹<br>
+     * 注意：删除文件夹时不会判断文件夹是否为空，如果不空则递归删除子文件或文件夹<br>
+     * 某个文件删除失败会终止删除操作
+     *
+     * <p>
+     * 从5.7.6开始，删除文件使用{@link Files#delete(Path)}代替 {@link File#delete()}<br>
+     * 因为前者遇到文件被占用等原因时，抛出异常，而非返回false，异常会指明具体的失败原因。
+     * </p>
+     *
+     * @param file 文件对象
+     * @return 成功与否
+     * @throws File IO异常
+     * @see Files#delete(Path)
+     */
+    public static boolean del(File file) throws Exception {
+        if (file == null || false == file.exists()) {
+            // 如果文件不存在或已被删除，此处返回true表示删除成功
+            return true;
+        }
+
+        if (file.isDirectory()) {
+            // 清空目录下所有文件和目录
+            boolean isOk = clean(file);
+            if (false == isOk) {
+                return false;
+            }
+        }
+
+        // 删除文件或清空后的目录
+        final Path path = file.toPath();
+        try {
+            delFile(path);
+        } catch (DirectoryNotEmptyException e) {
+            // 遍历清空目录没有成功，此时补充删除一次（可能存在部分软链）
+//            del(path);
+        } catch (IOException e) {
+            throw new Exception(e);
+        }
+
+        return true;
+    }
+    /**
+     * 删除文件或空目录，不追踪软链
+     *
+     * @param path 文件对象
+     * @throws IOException IO异常
+     * @since 5.7.7
+     */
+    protected static void delFile(Path path) throws IOException {
+        try {
+            Files.delete(path);
+        } catch (AccessDeniedException e) {
+            // 可能遇到只读文件，无法删除.使用 file 方法删除
+            if (false == path.toFile().delete()) {
+                throw e;
+            }
+        }
+    }
+    /**
+     * 清空文件夹<br>
+     * 注意：清空文件夹时不会判断文件夹是否为空，如果不空则递归删除子文件或文件夹<br>
+     * 某个文件删除失败会终止删除操作
+     *
+     * @param directory 文件夹
+     * @return 成功与否
+     * @throws Exception IO异常
+     * @since 3.0.6
+     */
+    public static boolean clean(File directory) throws Exception {
+        if (directory == null || directory.exists() == false || false == directory.isDirectory()) {
+            return true;
+        }
+
+        final File[] files = directory.listFiles();
+        if (null != files) {
+            for (File childFile : files) {
+                if (false == del(childFile)) {
+                    // 删除一个出错则本次删除任务失败
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     private static void compressFile(File file, ZipOutputStream zipOut, String baseDir) throws IOException {
         if (!file.exists()) {
             return;
@@ -141,4 +234,85 @@ public abstract class FileUtil {
             }
         }
     }
+
+
+        // 通过url下载图片
+        public static void downloadPicture(String urlList, String path) {
+            URL url = null;
+            try {
+                url = new URL(urlList);
+                DataInputStream dataInputStream = new DataInputStream(url.openStream());  // 文件读取
+
+                // 如果目录不存在就创建目录
+                File file = new File(path);
+                if (!file.getParentFile().exists()) {
+                    try {
+                        file.getParentFile().mkdirs();
+                        file.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                FileOutputStream fileOutputStream = new FileOutputStream(file); // 文件写出
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int length;
+
+                while ((length = dataInputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+                fileOutputStream.write(outputStream.toByteArray());
+
+                // 连接关闭
+                dataInputStream.close();
+                fileOutputStream.close();
+                outputStream.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
+    /**
+     * 通过URL下载文件到指定路径
+     *
+     * @param url      URL
+     * @param filePath 指定路径
+     * @param headers  HTTP头
+     * @return
+     * @throws IOException
+     *//*
+
+    public static File download(String url, String filePath, NameValuePair... headers) throws IOException {
+        File file = new File(filePath);
+
+        HttpClient client = new DefaultHttpClient();
+        HttpGet request = new HttpGet(url);
+        if (!ABTextUtil.isEmpty(headers)) {
+            for (NameValuePair header : headers) {
+                request.addHeader(header.getName(), header.getValue());
+            }
+        }
+        InputStream is = null;
+        FileOutputStream fos = null;
+        try {
+            HttpResponse response = client.execute(request);
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+                is = response.getEntity().getContent();
+                fos = new FileOutputStream(file);
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, len);
+                }
+                fos.flush();
+            }
+        } catch (IOException e) {
+
+        } finally {
+            ABIOUtil.closeIO(is, fos);
+        }
+        return file;
+    }*/
+
 }

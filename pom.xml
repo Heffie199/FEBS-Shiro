@@ -33,6 +33,7 @@
         <dynamic.datasource.version>3.3.1</dynamic.datasource.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <thymeleaf-extras-shiro.version>2.0.0</thymeleaf-extras-shiro.version>
+        <hutool-all.version>5.7.22</hutool-all.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <package-time>${maven.build.timestamp}</package-time>
     </properties>
@@ -179,7 +180,11 @@
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>${hutool-all.version}</version>
+        </dependency>
         <!-- google guava -->
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -225,6 +230,12 @@
             <groupId>xml-apis</groupId>
             <artifactId>xml-apis</artifactId>
             <version>${xml-apis.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-test</artifactId>
+            <version>2.6.4</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
