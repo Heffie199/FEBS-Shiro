@@ -1,18 +1,25 @@
 package test.java;
 
+
 import cc.mrbird.febs.FebsShiroApplication;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import jogamp.graph.font.typecast.ot.table.Table;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 
+import javax.swing.text.Document;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.apache.commons.io.FileUtils.waitFor;
 
 /**
  * <p>
@@ -26,6 +33,24 @@ import static org.apache.commons.io.FileUtils.waitFor;
 @Slf4j
 public class FatureTest {
     private static final RejectedExecutionHandler defaultHandler = new ThreadPoolExecutor.AbortPolicy();
+    @SneakyThrows
+    @Test
+    public void test0(){
+      /*  PdfWriter pdfWriter = new PdfWriter("./demo2.pdf");
+        PdfDocument pdfDocument = new PdfDocument(pdfWriter);
+        PdfFont font = PdfFontFactory.createFont("E:\\pdfProject\\src\\main\\java\\simhei.ttf");
+        Document document = new Document(pdfDocument).setFont(font);
+       Table table = new Table(4);
+        table.setWidth(500);
+        table.addHeaderCell("header 1").addHeaderCell("header 2").addHeaderCell("header 3").addHeaderCell("header 4");
+        for(int i = 0; i < 16; i++) {
+            table.addCell("cell " + i);
+        }
+        document.add(table);
+
+        document.close();*/
+
+    }
     @Test
     public void test1() throws Exception {
         System.out.println("--main函数开始执行");
